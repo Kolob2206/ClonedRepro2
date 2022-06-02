@@ -176,7 +176,7 @@ step "Run a Script" {
         channels = ["Hotfix"]
         properties = {
             Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Script.ScriptBody = "write-host 'hi'"
+            Octopus.Action.Script.ScriptBody = "write-host 'his'"
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
         }
