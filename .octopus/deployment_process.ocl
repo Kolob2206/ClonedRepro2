@@ -153,10 +153,10 @@ step "Run an Azure Script" {
         }
         worker_pool_variable = ""
 
-        packages "CEB_TopicRegistration" {
+        packages "CfB_TopicRegistration" {
             acquisition_location = "Server"
             feed = "#{AX.NugetFeed.Product}"
-            package_id = "CEB_TopicRegistration"
+            package_id = "CfB_TopicRegistration"
             properties = {
                 Extract = "True"
                 Purpose = ""
