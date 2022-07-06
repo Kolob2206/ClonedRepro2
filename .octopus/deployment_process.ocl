@@ -15,6 +15,7 @@ step "DacPac.Client.WorkbenchServices_Audit" {
             Octopus.Action.Package.DownloadOnTentacle = "True"
             Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
             Octopus.Action.Package.PackageId = "DacPac_Client_WorkbenchServices.Audit"
+            Octopus.Action.RunOnServer = "false"
             Octopus.Action.SubstituteInFiles.TargetFiles = "*.publish.xml"
         }
         tenant_tags = ["Product Tags/WorkBench"]
@@ -48,6 +49,7 @@ step "DacPac.Client.WorkbenchServices" {
             Octopus.Action.Package.DownloadOnTentacle = "True"
             Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
             Octopus.Action.Package.PackageId = "DacPac_Client_WorkbenchServices"
+            Octopus.Action.RunOnServer = "false"
             Octopus.Action.SubstituteInFiles.TargetFiles = "*.publish.xml"
         }
         tenant_tags = ["Product Tags/WorkBench"]
@@ -70,13 +72,11 @@ step "ServiceFabric.Client.axWorkbenchServiceFabric" {
 
     action {
         action_type = "Octopus.AzureServiceFabricApp"
-        is_disabled = true
         properties = {
             Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
             Octopus.Action.Package.DownloadOnTentacle = "True"
             Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
             Octopus.Action.Package.PackageId = "ServiceFabric_Client_Workbench"
-            Octopus.Action.RunOnServer = "true"
             Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
             Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
             Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
@@ -120,7 +120,6 @@ step "ServiceFabric.Client.WorkbenchInfrastructureApp" {
             Octopus.Action.Package.DownloadOnTentacle = "True"
             Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
             Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchInfrastructureApp"
-            Octopus.Action.RunOnServer = "true"
             Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
             Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
             Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
@@ -164,7 +163,6 @@ step "ServiceFabric.Client.WorkbenchUIApp" {
             Octopus.Action.Package.DownloadOnTentacle = "True"
             Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
             Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchUIApp"
-            Octopus.Action.RunOnServer = "true"
             Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
             Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
             Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
@@ -208,7 +206,6 @@ step "ServiceFabric.Client.WorkbenchServicesApp" {
             Octopus.Action.Package.DownloadOnTentacle = "True"
             Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
             Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchServicesApp"
-            Octopus.Action.RunOnServer = "true"
             Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
             Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
             Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
@@ -248,7 +245,6 @@ step "Service Fabric Post Deploy Check" {
         is_disabled = true
         notes = "DEVOPS-4708 - To validate the presence/version of each ServiceFabric application on Client Clusters"
         properties = {
-            Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 write-host "Running post-deployment script to validate SvcFab application health."
                 Write-Host "Calling API Function with below values:"
@@ -282,7 +278,6 @@ step "AxiomaWorkbench Post Deploy - CDN Version" {
         excluded_environments = ["Dev-FB", "Dev-CI", "Sandbox"]
         is_disabled = true
         properties = {
-            Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 #
                 # DEVOPS-4490 Set environment UI version from dist/version.xxxx.json on the package 
@@ -428,7 +423,6 @@ step "Run a Script" {
     action {
         action_type = "Octopus.Script"
         properties = {
-            Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = "Write-Host $OctopusParameters[\"Axioma.NugetFeed.Product\"]"
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
