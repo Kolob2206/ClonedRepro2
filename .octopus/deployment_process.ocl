@@ -93,7 +93,7 @@ step "ServiceFabric.Client.axWorkbenchServiceFabric" {
             OctopusUseBundledTooling = "True"
         }
         tenant_tags = []
-        worker_pool = ""
+        worker_pool = "Cloud Pool"
 
         packages {
             acquisition_location = "ExecutionTarget"
@@ -136,7 +136,7 @@ step "ServiceFabric.Client.WorkbenchInfrastructureApp" {
             OctopusUseBundledTooling = "True"
         }
         tenant_tags = []
-        worker_pool = ""
+        worker_pool = "Cloud Pool"
 
         packages {
             acquisition_location = "ExecutionTarget"
@@ -179,7 +179,7 @@ step "ServiceFabric.Client.WorkbenchUIApp" {
             OctopusUseBundledTooling = "True"
         }
         tenant_tags = []
-        worker_pool = ""
+        worker_pool = "Cloud Pool"
 
         packages {
             acquisition_location = "ExecutionTarget"
@@ -222,7 +222,7 @@ step "ServiceFabric.Client.WorkbenchServicesApp" {
             OctopusUseBundledTooling = "True"
         }
         tenant_tags = []
-        worker_pool = ""
+        worker_pool = "Cloud Pool"
 
         packages {
             acquisition_location = "ExecutionTarget"
@@ -267,7 +267,7 @@ step "Service Fabric Post Deploy Check" {
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "True"
         }
-        worker_pool = ""
+        worker_pool = "Cloud Pool"
     }
 }
 
@@ -403,7 +403,7 @@ step "AxiomaWorkbench Post Deploy - CDN Version" {
             Octopus.Action.Script.Syntax = "PowerShell"
         }
         tenant_tags = []
-        worker_pool = ""
+        worker_pool = "Cloud Pool"
 
         packages "gallery-ui" {
             acquisition_location = "ExecutionTarget"
