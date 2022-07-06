@@ -18,7 +18,6 @@ step "DacPac.Client.WorkbenchServices_Audit" {
             Octopus.Action.RunOnServer = "false"
             Octopus.Action.SubstituteInFiles.TargetFiles = "*.publish.xml"
         }
-        tenant_tags = []
 
         packages {
             acquisition_location = "ExecutionTarget"
@@ -52,7 +51,6 @@ step "DacPac.Client.WorkbenchServices" {
             Octopus.Action.RunOnServer = "false"
             Octopus.Action.SubstituteInFiles.TargetFiles = "*.publish.xml"
         }
-        tenant_tags = []
 
         packages {
             acquisition_location = "ExecutionTarget"
@@ -92,7 +90,6 @@ step "ServiceFabric.Client.axWorkbenchServiceFabric" {
             EOT
             OctopusUseBundledTooling = "True"
         }
-        tenant_tags = []
         worker_pool = "Cloud Pool"
 
         packages {
@@ -135,7 +132,6 @@ step "ServiceFabric.Client.WorkbenchInfrastructureApp" {
             EOT
             OctopusUseBundledTooling = "True"
         }
-        tenant_tags = []
         worker_pool = "Cloud Pool"
 
         packages {
@@ -178,7 +174,6 @@ step "ServiceFabric.Client.WorkbenchUIApp" {
             EOT
             OctopusUseBundledTooling = "True"
         }
-        tenant_tags = []
         worker_pool = "Cloud Pool"
 
         packages {
@@ -221,7 +216,6 @@ step "ServiceFabric.Client.WorkbenchServicesApp" {
             EOT
             OctopusUseBundledTooling = "True"
         }
-        tenant_tags = []
         worker_pool = "Cloud Pool"
 
         packages {
@@ -275,7 +269,6 @@ step "AxiomaWorkbench Post Deploy - CDN Version" {
 
     action {
         action_type = "Octopus.Script"
-        excluded_environments = []
         is_disabled = true
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -402,12 +395,11 @@ step "AxiomaWorkbench Post Deploy - CDN Version" {
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
         }
-        tenant_tags = []
         worker_pool = "Cloud Pool"
 
         packages "gallery-ui" {
             acquisition_location = "ExecutionTarget"
-            feed = "Artifactory External feed"
+            feed = "Octopus Server (built-in)"
             package_id = "gallery-ui"
             properties = {
                 Extract = "True"
