@@ -423,7 +423,7 @@ step "Run a Script" {
 
         packages "ServiceFabric_Client_WorkbenchUIApp" {
             acquisition_location = "Server"
-            feed = "Artifactory External feed"
+            feed = "Octopus Server (built-in)"
             package_id = "ServiceFabric_Client_WorkbenchUIApp"
             properties = {
                 Extract = "False"
