@@ -275,7 +275,7 @@ step "AxiomaWorkbench Post Deploy - CDN Version" {
 
     action {
         action_type = "Octopus.Script"
-        excluded_environments = ["Dev-FB", "Dev-CI", "Sandbox"]
+        excluded_environments = []
         is_disabled = true
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -407,7 +407,7 @@ step "AxiomaWorkbench Post Deploy - CDN Version" {
 
         packages "gallery-ui" {
             acquisition_location = "ExecutionTarget"
-            feed = "Artifactory - Product Packages"
+            feed = "Artifactory External feed"
             package_id = "gallery-ui"
             properties = {
                 Extract = "True"
@@ -431,7 +431,7 @@ step "Run a Script" {
 
         packages "ServiceFabric_Client_WorkbenchUIApp" {
             acquisition_location = "Server"
-            feed = "Artifactory - Product Packages"
+            feed = "Artifactory External feed"
             package_id = "ServiceFabric_Client_WorkbenchUIApp"
             properties = {
                 Extract = "False"
