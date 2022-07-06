@@ -1,164 +1,419 @@
-step "Run an Azure Script" {
+step "DacPac.Client.WorkbenchServices_Audit" {
+    properties = {
+        Octopus.Action.TargetRoles = "DacPacClient"
+    }
 
     action {
-        action_type = "Octopus.AzurePowerShell"
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                #call the function from the script module loaded with this process
+                DeployDacPac -publishFile "WorkbenchServices.Audit.OctoDeploy.publish.xml" -dacPacFile "WorkbenchServices_Audit.dacpac"
+                
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.DownloadOnTentacle = "True"
+            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
+            Octopus.Action.Package.PackageId = "DacPac_Client_WorkbenchServices.Audit"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.publish.xml"
+        }
+        tenant_tags = ["Product Tags/WorkBench"]
+
+        packages {
+            acquisition_location = "ExecutionTarget"
+            feed = "#{Axioma.NugetFeed.Product}"
+            package_id = "DacPac_Client_WorkbenchServices.Audit"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "DacPac.Client.WorkbenchServices" {
+    properties = {
+        Octopus.Action.TargetRoles = "DacPacClient"
+    }
+
+    action {
+        action_type = "Octopus.TentaclePackage"
         is_disabled = true
         properties = {
-            Octopus.Action.Azure.AccountId = "#{Tenant.Azure.Octopus.ServicePrincipal}"
-            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                #call the function from the script module loaded with this process
+                DeployDacPac -publishFile "WorkbenchServices.OctoDeploy.publish.xml" -dacPacFile "WorkbenchServices.dacpac"
+                
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.DownloadOnTentacle = "True"
+            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
+            Octopus.Action.Package.PackageId = "DacPac_Client_WorkbenchServices"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.publish.xml"
+        }
+        tenant_tags = ["Product Tags/WorkBench"]
+
+        packages {
+            acquisition_location = "ExecutionTarget"
+            feed = "#{Axioma.NugetFeed.Product}"
+            package_id = "DacPac_Client_WorkbenchServices"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "ServiceFabric.Client.axWorkbenchServiceFabric" {
+    properties = {
+        Octopus.Action.TargetRoles = "ServiceFabricClient"
+    }
+
+    action {
+        action_type = "Octopus.AzureServiceFabricApp"
+        is_disabled = true
+        properties = {
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.DownloadOnTentacle = "True"
+            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
+            Octopus.Action.Package.PackageId = "ServiceFabric_Client_Workbench"
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
+            Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
+            Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
+            Octopus.Action.ServiceFabric.PublishProfileFile = "PublishProfiles\\OctoDeploy.xml"
+            Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec = "3600"
+            Octopus.Action.ServiceFabric.SkipPackageValidation = "False"
+            Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
+                *\ServiceManifest.xml
+                ApplicationParameters\OctoDeploy.xml
+                PublishProfiles\OctoDeploy.xml
+                ApplicationManifest.xml
+                
+            EOT
+            OctopusUseBundledTooling = "True"
+        }
+        tenant_tags = ["Product Tags/WorkBench"]
+        worker_pool = "Cloud Production Pool"
+
+        packages {
+            acquisition_location = "ExecutionTarget"
+            feed = "#{Axioma.NugetFeed.Product}"
+            package_id = "ServiceFabric_Client_Workbench"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "ServiceFabric.Client.WorkbenchInfrastructureApp" {
+    properties = {
+        Octopus.Action.TargetRoles = "ServiceFabricClient"
+    }
+    start_trigger = "StartWithPrevious"
+
+    action {
+        action_type = "Octopus.AzureServiceFabricApp"
+        is_disabled = true
+        properties = {
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.DownloadOnTentacle = "True"
+            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
+            Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchInfrastructureApp"
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
+            Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
+            Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
+            Octopus.Action.ServiceFabric.PublishProfileFile = "PublishProfiles\\OctoDeploy.xml"
+            Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec = "3600"
+            Octopus.Action.ServiceFabric.SkipPackageValidation = "False"
+            Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
+                *\ServiceManifest.xml
+                ApplicationParameters\OctoDeploy.xml
+                PublishProfiles\OctoDeploy.xml
+                ApplicationManifest.xml
+                
+            EOT
+            OctopusUseBundledTooling = "True"
+        }
+        tenant_tags = ["Product Tags/WorkBench"]
+        worker_pool = "Cloud Production Pool"
+
+        packages {
+            acquisition_location = "ExecutionTarget"
+            feed = "#{Axioma.NugetFeed.Product}"
+            package_id = "ServiceFabric_Client_WorkbenchInfrastructureApp"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "ServiceFabric.Client.WorkbenchUIApp" {
+    properties = {
+        Octopus.Action.TargetRoles = "ServiceFabricClient"
+    }
+    start_trigger = "StartWithPrevious"
+
+    action {
+        action_type = "Octopus.AzureServiceFabricApp"
+        is_disabled = true
+        properties = {
+            Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.DownloadOnTentacle = "True"
+            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
+            Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchUIApp"
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
+            Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
+            Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
+            Octopus.Action.ServiceFabric.PublishProfileFile = "PublishProfiles\\OctoDeploy.xml"
+            Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec = "3600"
+            Octopus.Action.ServiceFabric.SkipPackageValidation = "False"
+            Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
+                *\ServiceManifest.xml
+                ApplicationParameters\OctoDeploy.xml
+                PublishProfiles\OctoDeploy.xml
+                ApplicationManifest.xml
+                
+            EOT
+            OctopusUseBundledTooling = "True"
+        }
+        tenant_tags = ["Product Tags/WorkBench"]
+        worker_pool = "Cloud Production Pool"
+
+        packages {
+            acquisition_location = "ExecutionTarget"
+            feed = "#{Axioma.NugetFeed.Product}"
+            package_id = "ServiceFabric_Client_WorkbenchUIApp"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "ServiceFabric.Client.WorkbenchServicesApp" {
+    properties = {
+        Octopus.Action.TargetRoles = "ServiceFabricClient"
+    }
+    start_trigger = "StartWithPrevious"
+
+    action {
+        action_type = "Octopus.AzureServiceFabricApp"
+        is_disabled = true
+        properties = {
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.DownloadOnTentacle = "True"
+            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
+            Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchServicesApp"
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
+            Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
+            Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
+            Octopus.Action.ServiceFabric.PublishProfileFile = "PublishProfiles\\OctoDeploy.xml"
+            Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec = "3600"
+            Octopus.Action.ServiceFabric.SkipPackageValidation = "False"
+            Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
+                *\ServiceManifest.xml
+                ApplicationParameters\OctoDeploy.xml
+                PublishProfiles\OctoDeploy.xml
+                ApplicationManifest.xml
+                
+            EOT
+            OctopusUseBundledTooling = "True"
+        }
+        tenant_tags = ["Product Tags/WorkBench"]
+        worker_pool = "Cloud Production Pool"
+
+        packages {
+            acquisition_location = "ExecutionTarget"
+            feed = "#{Axioma.NugetFeed.Product}"
+            package_id = "ServiceFabric_Client_WorkbenchServicesApp"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Service Fabric Post Deploy Check" {
+    properties = {
+        Octopus.Action.TargetRoles = "ServiceFabricClient"
+    }
+
+    action {
+        action_type = "Octopus.AzureServiceFabricPowerShell"
+        is_disabled = true
+        notes = "DEVOPS-4708 - To validate the presence/version of each ServiceFabric application on Client Clusters"
+        properties = {
+            Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = <<-EOT
-                #
-                # Created by: Eric Stadter, Last Changed:  10/21/2019
-                # Update by: Angus Choy, Last Changed:  03/02/2021
-                #
+                write-host "Running post-deployment script to validate SvcFab application health."
+                Write-Host "Calling API Function with below values:"
+                Write-Host "------------------------------------------------------------"
+                Write-Host "  spaceName:" $OctopusParameters["Octopus.Space.Name"]
+                Write-Host "  projectName:" $OctopusParameters["Octopus.Project.Name"]
+                Write-Host "  environmentName:" $OctopusParameters["Octopus.Environment.Name"]
+                Write-Host "  releaseID:" $OctopusParameters["Octopus.Release.Id"]
+                Write-Host "  taskID:" $OctopusParameters["Octopus.Task.Id"]
+                Write-Host "------------------------------------------------------------"
                 
-                # Enable TLS 1.2
-                [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-                
-                # Variable Setups
-                $connectionString = $OctopusParameters["Tenant.CEB.StorageAccountConnectionString"]
-                $functionAppName = $OctopusParameters["Tenant.CEB.CaptureFunction.FunctionAppName"]
-                $resourceGroupName = $OctopusParameters["Tenant.CEB.CaptureFunction.ResourceGroupName"]
-                $resourceGroupLocation = $OctopusParameters["Tenant.CEB.CaptureFunction.ResourceLocation"]
-                $eventGridTopicPrefix = $OctopusParameters["Tenant.CEB.Infrastructure.TopicPrefix"]
-                $eventGridTopicNames = $OctopusParameters["Tenant.CEB.Infrastructure.TopicNames"]
-                $topicRegistrationTenantId = $OctopusParameters["Tenant.CEB.TenantId"]
-                $topicRegistrationSubscriptionId = $OctopusParameters["Tenant.CEB.SubscriptionId"]
-                $topicRegistrationApplicationId = $OctopusParameters["Tenant.CEB.ApplicationId"]
-                $topicRegistrationApplicationIdPassword = $OctopusParameters["Tenant.CEB.ApplicationId.Password"]
-                
-                # Get Azure FunctionApp admin token
-                $subscriptionId = az account show --query id -o tsv
-                $auth = az account get-access-token --output tsv --query accessToken
-                $accessTokenHeader = @{ "Authorization" = "Bearer " + $auth }
-                $azureRmBaseUri = "https://management.azure.com"
-                $azureRmApiVersion = "2016-08-01"
-                $azureRmResourceType = "Microsoft.Web/sites"
-                $azureRmResourceId = "/subscriptions/$subscriptionId/resourceGroups/$resourceGroupName/providers/$azureRmResourceType/$functionAppName"
-                $azureRmAdminBearerTokenEndpoint = "/functions/admin/token"
-                $adminBearerTokenUri = "$azureRmBaseUri$azureRmResourceId$azureRmAdminBearerTokenEndpoint\?api-version=$azureRmApiVersion"
-                $adminBearerToken = Invoke-RestMethod -Method Get -Uri $adminBearerTokenUri -Headers $accessTokenHeader
-                $functionAppBaseUri = "https://$functionAppName.azurewebsites.net/admin"
-                $masterKeyEndpoint = "/host/systemkeys/_master"
-                $masterKeyUri = $functionAppBaseUri + $masterKeyEndpoint
-                $adminTokenHeader = @{ "Authorization" = "Bearer $adminBearerToken" }
-                
-                # wait for the environment to load up
-                Function Wait-Until-Ready {
-                    $tries = 0;
-                    $done = $false;
-                    while ($done -eq $false) {
-                        if ($tries -eq 10) {
-                            throw 'Giving up, new release not deployed';
-                            exit 1;
-                        }
-                        try {
-                            $masterKeyResponse = Invoke-RestMethod -Method Get -Uri $masterKeyUri -Headers $adminTokenHeader;
-                            $masterKey = $masterKeyResponse.value
-                            if ($masterKey -ne $null) {
-                               $done = $true;
-                               Write-Host "[INFO] REST API connected OK: $masterKeyUri";
-                            } else {
-                                $tries = $tries + 1;
-                            }
-                        } catch {
-                        	$tries = $tries + 1;
-                            Write-Warning "Reponse empty or http error, retrying...";
-                			Write-Warning $_;
-                            Write-Host "[INFO] Number of retries: $tries"
-                        }
-                        Start-Sleep -Seconds 6;
-                    }
-                }
-                
-                Wait-Until-Ready;
-                
-                # Get FunctionApp master key
-                Write-Host "Acquiring Azure Function app master key..."
-                $masterKeyResponse = Invoke-RestMethod -Method Get -Uri $masterKeyUri -Headers $adminTokenHeader
-                $masterKey = $masterKeyResponse.value
-                if ([string]::IsNullOrEmpty($masterKey))
-                {
-                    throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring master key.")
-                }
-                
-                # Get FunctionApp system key
-                Write-Host "Acquiring Azure Function app system key..."
-                $systemKeyUri = "$functionAppBaseUri/host/systemkeys/eventgrid_extension?code=$masterKey"
-                $systemKeyResponse = Invoke-RestMethod -Uri $systemKeyUri -Headers $adminTokenHeader
-                $systemKey = $systemKeyResponse.value
-                if ([string]::IsNullOrEmpty($systemKey))
-                {
-                    throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring system key.")
-                }
-                
-                # Get the appsettings.json path
-                $settingsFile = $OctopusParameters["Octopus.Action.Package[CEB_TopicRegistration].ExtractedPath"] + "\appsettings.json"
-                $settingsJson = Get-Content $settingsFile | Out-String | ConvertFrom-Json
-                
-                $jsonTopicList = @();
-                $eventGridTopicNames.Split(',').ForEach({ 
-                    $topicFullName = $eventGridTopicPrefix + $_
-                	Write-Host "Processing topic $topicFullName ..."
-                
-                	# Get the endpoint for the topic
-                	$topicEndpoint = az eventgrid topic show -n $topicFullName -g $resourceGroupName --query endpoint --output tsv
-                	if ([string]::IsNullOrEmpty($topicEndpoint))
-                	{
-                		throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring endpoint.")
-                	}
-                	Write-Host $topicEndpoint
-                
-                    # Get key for the topic
-                    $eventGridAccessKeyForTopic = az eventgrid topic key list -n $topicFullName -g $resourceGroupName --query key1 --output tsv
-                    if ([string]::IsNullOrEmpty($eventGridAccessKeyForTopic))
-                    {
-                        throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring grid access key.")
-                    }
-                
-                    # Inject into the working json
-                    $jsonTopicList += @{AXTopicName = "$_" ; eventGridTopicName = "$topicFullName" ; eventGridEndpoint = "$topicEndpoint" ; eventGridAccessKey = "$eventGridAccessKeyForTopic"} 
-                })
-                $settingsJson.CEB.topicConfig.topics = $jsonTopicList
-                $settingsJson | ConvertTo-Json -depth 10 | Set-Content $settingsFile
-                
-                # Perform Topic Registration from the App
-                $exeLocation = $OctopusParameters["Octopus.Action.Package[CEB_TopicRegistration].ExtractedPath"] + "\CEB.TopicRegistration.exe"
-                $exeArgList = "-connectionString `"$connectionString`" -tenantId `"$topicRegistrationTenantId`" -subscriptionId `"$topicRegistrationSubscriptionId`" -applicationId `"$topicRegistrationApplicationId`" -applicationIdPassword `"$topicRegistrationApplicationIdPassword`" "
-                
-                if (Test-Path $exeLocation)
-                {
-                    Write-Host "Running Topic Registration App..." 
-                    $exeRun = Start-Process -FilePath $exeLocation -ArgumentList $exeArgList -NoNewWindow -Wait -PassThru
-                
-                    if ($exeRun.ExitCode -ne 0)
-                	{
-                   		throw New-Object -TypeName System.InvalidOperationException("ERROR in Topic Registration App - provisioning failed.")
-                	}
-                
-                    Write-Host "Topic Registration is complete."
-                }
-                else
-                {
-                	throw New-Object -TypeName System.InvalidOperationException("ERROR in Topic Registration App - failed to find executable.")
-                }
-                
-                # Exit
-                Write-Host "Process is complete."
-                New-OctopusArtifact $settingsFile
-                
-                
+                CheckServiceFabricAppVer `
+                    -spaceName $OctopusParameters["Octopus.Space.Name"] `
+                    -projectName $OctopusParameters["Octopus.Project.Name"] `
+                	-environmentName $OctopusParameters["Octopus.Environment.Name"] `
+                	-releaseID $OctopusParameters["Octopus.Release.Id"] `
+                	-taskID $OctopusParameters["Octopus.Task.Id"]
             EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "True"
         }
-        worker_pool_variable = ""
+        worker_pool = "Cloud Production Pool"
+    }
+}
 
-        packages "CfB_TopicRegistration" {
-            acquisition_location = "Server"
-            feed = "#{AX.NugetFeed.Product}"
-            package_id = "CfB_TopicRegistration"
+step "AxiomaWorkbench Post Deploy - CDN Version" {
+
+    action {
+        action_type = "Octopus.Script"
+        excluded_environments = ["Dev-FB", "Dev-CI", "Sandbox"]
+        is_disabled = true
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                #
+                # DEVOPS-4490 Set environment UI version from dist/version.xxxx.json on the package 
+                #
+                
+                #login to blueApi
+                Function LogIn {
+                    $Form = @{
+                        username   = $username
+                        password   = $password
+                        client_id  = $client_id
+                        grant_type = "password"
+                    };
+                
+                	try{
+                		$Response = Invoke-WebRequest -Uri $authUrl -Method Post -Body $Form -UseBasicParsing;
+                		Return (ConvertFrom-Json $Response).access_token;
+                	} catch {
+                		Write-Error "Could not log in";
+                		Write-Error $_;
+                		throw $_;
+                		exit 1;
+                	}
+                }
+                
+                $username       = "#{axWorkbench.adminuser}"
+                $password       = "#{axWorkbench.adminpassword}"
+                $client_id      = "#{axWorkbench.connectors.apiClient}"
+                $baseUrl        = "#{Tenant.General.ExternalUrl.PostDeploy}"
+                $versionScript  = "#{Octopus.Action.Package[gallery-ui].ExtractedPath}\version.json"
+                
+                $authUrl      = $baseUrl + '/auth/connect/token'
+                $manifestUrl  = $baseUrl + '/workbench/static/manifest.json'
+                $modulesUrl   = $baseUrl + '/wb-api/applications/api/v1/modules'
+                $uiVersionURL = $baseUrl + '/wb-api/applications/api/v1/manifests/version'
+                $apiPing 	  = $baseUrl + '/wb-api/applications/api/ping'
+                $cacheURL	  = $baseUrl + '/workbench/api/v1/config/version-cache'
+                $ping         = $baseUrl + '/workbench/api/ping'
+                
+                Write-Host "[INFO] Octo Worker Host: $env:computername "
+                Write-Host "[INFO] username: $username "
+                Write-Host "[INFO] baseUrl: $baseUrl "
+                Write-Host "[INFO] authUrl: $authUrl "
+                
+                
+                $versionBody = Get-Content $versionScript -Force
+                $token = LogIn
+                $token = 'Bearer ' + $token
+                $versionHeaders = @{
+                    'Authorization' = $token
+                    'Content-Type'  = 'application/json'
+                    'Content-Length'= $versionBody.Length
+                }
+                
+                # wait until the url is up
+                $attempt = 0
+                do {
+                    try {
+                        # Set version
+                        Write-Host "Checking if URL is up: $apiPing"
+                		Invoke-WebRequest -Uri $apiPing -UseBasicParsing -DisableKeepAlive	
+                
+                        if (-not $LASTEXITCODE) {
+                             $success = $true
+                        } else {
+                            throw "Transient error. LASTEXITCODE is $LASTEXITCODE."
+                        }
+                    }
+                    catch {
+                        if ($attempt -eq 5) {
+                            Write-Error "Task failed. With all $attempt attempts. Error: $($Error[0].Exception.Response.StatusCode)"
+                            throw
+                        }
+                
+                        Write-Host "Task failed. Attempt $attempt. Will retry in next $(5 * $attempt) seconds. Error: $($Error[0].Exception.Response.StatusCode)" -ForegroundColor Yellow
+                        Start-Sleep -Seconds $(5 * $attempt)
+                    }
+                    
+                    $attempt++
+                    
+                } until($success)
+                
+                # set manifest version
+                $attempt = 0
+                do {
+                    try {
+                        # Set version
+                        Write-Host "Setting workbench CDN version $versionScript. Running PUT on $uiVersionURL"
+                		Write-Host "JSON payload: $versionBody"
+                		Invoke-WebRequest -Uri $uiVersionURL -Body $versionBody -Method PUT -Headers $versionHeaders -UseBasicParsing
+                
+                        if (-not $LASTEXITCODE) {
+                             $success = $true
+                        } else {
+                            throw "Transient error. LASTEXITCODE is $LASTEXITCODE."
+                        }
+                    }
+                    catch {
+                        if ($attempt -eq 5) {
+                            Write-Error "Task failed. With all $attempt attempts. Error: $($Error[0].Exception.Response.StatusCode)"
+                            throw
+                        }
+                
+                        Write-Host "Task failed. Attempt $attempt. Will retry in next $(5 * $attempt) seconds. Error: $($Error[0].Exception.Response.StatusCode)" -ForegroundColor Yellow
+                        Start-Sleep -Seconds $(5 * $attempt)
+                    }
+                    
+                    $attempt++
+                    
+                } until($success)
+                
+                
+                # Clear cache
+                Write-Host "Clearing cache: Running DELETE on $cacheURL"
+                try{
+                    Invoke-WebRequest -Uri $cacheURL -Method DELETE -Headers $versionHeaders -UseBasicParsing
+                }
+                catch{
+                    Write-Error $_
+                }
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+        tenant_tags = ["Product Tags/WorkBench"]
+        worker_pool = "Cloud Production Pool"
+
+        packages "gallery-ui" {
+            acquisition_location = "ExecutionTarget"
+            feed = "Artifactory - Product Packages"
+            package_id = "gallery-ui"
             properties = {
                 Extract = "True"
                 Purpose = ""
@@ -169,214 +424,24 @@ step "Run an Azure Script" {
 }
 
 step "Run a Script" {
-    properties = {
-        Octopus.Action.TargetRoles = "client"
-    }
 
     action {
         action_type = "Octopus.Script"
-        channels = ["Hotfix"]
-        is_disabled = true
         properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Script.ScriptBody = "write-host 'his'"
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = "Write-Host $OctopusParameters[\"Axioma.NugetFeed.Product\"]"
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
         }
-        worker_pool_variable = ""
-    }
-}
+        worker_pool = "Default Worker Pool"
 
-step "Deploy a Package" {
-    properties = {
-        Octopus.Action.TargetRoles = "client"
-    }
-
-    action {
-        action_type = "Octopus.TentaclePackage"
-        properties = {
-            Octopus.Action.EnabledFeatures = ",Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "True"
-            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
-            Octopus.Action.Package.DownloadOnTentacle = "False"
-            Octopus.Action.Package.FeedId = "#{feed}"
-            Octopus.Action.Package.PackageId = "clientref"
-            Octopus.Action.RunOnServer = "false"
-        }
-        worker_pool_variable = ""
-
-        packages {
+        packages "ServiceFabric_Client_WorkbenchUIApp" {
             acquisition_location = "Server"
-            feed = "#{feed}"
-            package_id = "clientref"
+            feed = "Artifactory - Product Packages"
+            package_id = "ServiceFabric_Client_WorkbenchUIApp"
             properties = {
-                SelectionMode = "immediate"
-            }
-        }
-    }
-}
-
-step "Register EventGrid Topics and Subscriptions - MultiTopic" {
-
-    action {
-        action_type = "Octopus.AzurePowerShell"
-        properties = {
-            Octopus.Action.Azure.AccountId = "#{Tenant.Azure.Octopus.ServicePrincipal}"
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                #
-                # Created by: Eric Stadter, Last Changed:  10/21/2019
-                # Update by: Angus Choy, Last Changed:  03/02/2021
-                #
-                
-                # Enable TLS 1.2
-                [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-                
-                # Variable Setups
-                $connectionString = $OctopusParameters["Tenant.CEB.StorageAccountConnectionString"]
-                $functionAppName = $OctopusParameters["Tenant.CEB.CaptureFunction.FunctionAppName"]
-                $resourceGroupName = $OctopusParameters["Tenant.CEB.CaptureFunction.ResourceGroupName"]
-                $resourceGroupLocation = $OctopusParameters["Tenant.CEB.CaptureFunction.ResourceLocation"]
-                $eventGridTopicPrefix = $OctopusParameters["Tenant.CEB.Infrastructure.TopicPrefix"]
-                $eventGridTopicNames = $OctopusParameters["Tenant.CEB.Infrastructure.TopicNames"]
-                $topicRegistrationTenantId = $OctopusParameters["Tenant.CEB.TenantId"]
-                $topicRegistrationSubscriptionId = $OctopusParameters["Tenant.CEB.SubscriptionId"]
-                $topicRegistrationApplicationId = $OctopusParameters["Tenant.CEB.ApplicationId"]
-                $topicRegistrationApplicationIdPassword = $OctopusParameters["Tenant.CEB.ApplicationId.Password"]
-                
-                # Get Azure FunctionApp admin token
-                $subscriptionId = az account show --query id -o tsv
-                $auth = az account get-access-token --output tsv --query accessToken
-                $accessTokenHeader = @{ "Authorization" = "Bearer " + $auth }
-                $azureRmBaseUri = "https://management.azure.com"
-                $azureRmApiVersion = "2016-08-01"
-                $azureRmResourceType = "Microsoft.Web/sites"
-                $azureRmResourceId = "/subscriptions/$subscriptionId/resourceGroups/$resourceGroupName/providers/$azureRmResourceType/$functionAppName"
-                $azureRmAdminBearerTokenEndpoint = "/functions/admin/token"
-                $adminBearerTokenUri = "$azureRmBaseUri$azureRmResourceId$azureRmAdminBearerTokenEndpoint\?api-version=$azureRmApiVersion"
-                $adminBearerToken = Invoke-RestMethod -Method Get -Uri $adminBearerTokenUri -Headers $accessTokenHeader
-                $functionAppBaseUri = "https://$functionAppName.azurewebsites.net/admin"
-                $masterKeyEndpoint = "/host/systemkeys/_master"
-                $masterKeyUri = $functionAppBaseUri + $masterKeyEndpoint
-                $adminTokenHeader = @{ "Authorization" = "Bearer $adminBearerToken" }
-                
-                # wait for the environment to load up
-                Function Wait-Until-Ready {
-                    $tries = 0;
-                    $done = $false;
-                    while ($done -eq $false) {
-                        if ($tries -eq 10) {
-                            throw 'Giving up, new release not deployed';
-                            exit 1;
-                        }
-                        try {
-                            $masterKeyResponse = Invoke-RestMethod -Method Get -Uri $masterKeyUri -Headers $adminTokenHeader;
-                            $masterKey = $masterKeyResponse.value
-                            if ($masterKey -ne $null) {
-                               $done = $true;
-                               Write-Host "[INFO] REST API connected OK: $masterKeyUri";
-                            } else {
-                                $tries = $tries + 1;
-                            }
-                        } catch {
-                        	$tries = $tries + 1;
-                            Write-Warning "Reponse empty or http error, retrying...";
-                			Write-Warning $_;
-                            Write-Host "[INFO] Number of retries: $tries"
-                        }
-                        Start-Sleep -Seconds 6;
-                    }
-                }
-                
-                Wait-Until-Ready;
-                
-                # Get FunctionApp master key
-                Write-Host "Acquiring Azure Function app master key..."
-                $masterKeyResponse = Invoke-RestMethod -Method Get -Uri $masterKeyUri -Headers $adminTokenHeader
-                $masterKey = $masterKeyResponse.value
-                if ([string]::IsNullOrEmpty($masterKey))
-                {
-                    throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring master key.")
-                }
-                
-                # Get FunctionApp system key
-                Write-Host "Acquiring Azure Function app system key..."
-                $systemKeyUri = "$functionAppBaseUri/host/systemkeys/eventgrid_extension?code=$masterKey"
-                $systemKeyResponse = Invoke-RestMethod -Uri $systemKeyUri -Headers $adminTokenHeader
-                $systemKey = $systemKeyResponse.value
-                if ([string]::IsNullOrEmpty($systemKey))
-                {
-                    throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring system key.")
-                }
-                
-                # Get the appsettings.json path
-                $settingsFile = $OctopusParameters["Octopus.Action.Package[CEB_TopicRegistration].ExtractedPath"] + "\appsettings.json"
-                $settingsJson = Get-Content $settingsFile | Out-String | ConvertFrom-Json
-                
-                $jsonTopicList = @();
-                $eventGridTopicNames.Split(',').ForEach({ 
-                    $topicFullName = $eventGridTopicPrefix + $_
-                	Write-Host "Processing topic $topicFullName ..."
-                
-                	# Get the endpoint for the topic
-                	$topicEndpoint = az eventgrid topic show -n $topicFullName -g $resourceGroupName --query endpoint --output tsv
-                	if ([string]::IsNullOrEmpty($topicEndpoint))
-                	{
-                		throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring endpoint.")
-                	}
-                	Write-Host $topicEndpoint
-                
-                    # Get key for the topic
-                    $eventGridAccessKeyForTopic = az eventgrid topic key list -n $topicFullName -g $resourceGroupName --query key1 --output tsv
-                    if ([string]::IsNullOrEmpty($eventGridAccessKeyForTopic))
-                    {
-                        throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring grid access key.")
-                    }
-                
-                    # Inject into the working json
-                    $jsonTopicList += @{AXTopicName = "$_" ; eventGridTopicName = "$topicFullName" ; eventGridEndpoint = "$topicEndpoint" ; eventGridAccessKey = "$eventGridAccessKeyForTopic"} 
-                })
-                $settingsJson.CEB.topicConfig.topics = $jsonTopicList
-                $settingsJson | ConvertTo-Json -depth 10 | Set-Content $settingsFile
-                
-                # Perform Topic Registration from the App
-                $exeLocation = $OctopusParameters["Octopus.Action.Package[CEB_TopicRegistration].ExtractedPath"] + "\CEB.TopicRegistration.exe"
-                $exeArgList = "-connectionString `"$connectionString`" -tenantId `"$topicRegistrationTenantId`" -subscriptionId `"$topicRegistrationSubscriptionId`" -applicationId `"$topicRegistrationApplicationId`" -applicationIdPassword `"$topicRegistrationApplicationIdPassword`" "
-                
-                if (Test-Path $exeLocation)
-                {
-                    Write-Host "Running Topic Registration App..." 
-                    $exeRun = Start-Process -FilePath $exeLocation -ArgumentList $exeArgList -NoNewWindow -Wait -PassThru
-                
-                    if ($exeRun.ExitCode -ne 0)
-                	{
-                   		throw New-Object -TypeName System.InvalidOperationException("ERROR in Topic Registration App - provisioning failed.")
-                	}
-                
-                    Write-Host "Topic Registration is complete."
-                }
-                else
-                {
-                	throw New-Object -TypeName System.InvalidOperationException("ERROR in Topic Registration App - failed to find executable.")
-                }
-                
-                # Exit
-                Write-Host "Process is complete."
-                New-OctopusArtifact $settingsFile
-                
-                
-            EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "PowerShell"
-            OctopusUseBundledTooling = "True"
-        }
-        worker_pool = "Cloud Pool"
-
-        packages "CEB_TopicRegistration" {
-            acquisition_location = "Server"
-            feed = "#{AX.NugetFeed.Product}"
-            package_id = "CEB_TopicRegistration"
-            properties = {
-                Extract = "True"
+                Extract = "False"
+                Purpose = ""
                 SelectionMode = "immediate"
             }
         }
