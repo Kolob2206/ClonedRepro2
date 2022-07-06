@@ -5,6 +5,7 @@ step "Run an Azure Script" {
         is_disabled = true
         properties = {
             Octopus.Action.Azure.AccountId = "#{Tenant.Azure.Octopus.ServicePrincipal}"
+            Octopus.Action.RunOnServer = "false"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 #
                 # Created by: Eric Stadter, Last Changed:  10/21/2019
@@ -198,14 +199,15 @@ step "Deploy a Package" {
             Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "True"
             Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
             Octopus.Action.Package.DownloadOnTentacle = "False"
-            Octopus.Action.Package.FeedId = "Octopus Server (built-in)"
+            Octopus.Action.Package.FeedId = "#{feed}"
             Octopus.Action.Package.PackageId = "clientref"
+            Octopus.Action.RunOnServer = "false"
         }
         worker_pool_variable = ""
 
         packages {
             acquisition_location = "Server"
-            feed = "Octopus Server (built-in)"
+            feed = "#{feed}"
             package_id = "clientref"
             properties = {
                 SelectionMode = "immediate"
@@ -225,10 +227,10 @@ step "Register EventGrid Topics and Subscriptions - MultiTopic" {
                 # Created by: Eric Stadter, Last Changed:  10/21/2019
                 # Update by: Angus Choy, Last Changed:  03/02/2021
                 #
-
+                
                 # Enable TLS 1.2
                 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-
+                
                 # Variable Setups
                 $connectionString = $OctopusParameters["Tenant.CEB.StorageAccountConnectionString"]
                 $functionAppName = $OctopusParameters["Tenant.CEB.CaptureFunction.FunctionAppName"]
@@ -240,7 +242,7 @@ step "Register EventGrid Topics and Subscriptions - MultiTopic" {
                 $topicRegistrationSubscriptionId = $OctopusParameters["Tenant.CEB.SubscriptionId"]
                 $topicRegistrationApplicationId = $OctopusParameters["Tenant.CEB.ApplicationId"]
                 $topicRegistrationApplicationIdPassword = $OctopusParameters["Tenant.CEB.ApplicationId.Password"]
-
+                
                 # Get Azure FunctionApp admin token
                 $subscriptionId = az account show --query id -o tsv
                 $auth = az account get-access-token --output tsv --query accessToken
@@ -256,7 +258,7 @@ step "Register EventGrid Topics and Subscriptions - MultiTopic" {
                 $masterKeyEndpoint = "/host/systemkeys/_master"
                 $masterKeyUri = $functionAppBaseUri + $masterKeyEndpoint
                 $adminTokenHeader = @{ "Authorization" = "Bearer $adminBearerToken" }
-
+                
                 # wait for the environment to load up
                 Function Wait-Until-Ready {
                     $tries = 0;
@@ -284,9 +286,9 @@ step "Register EventGrid Topics and Subscriptions - MultiTopic" {
                         Start-Sleep -Seconds 6;
                     }
                 }
-
+                
                 Wait-Until-Ready;
-
+                
                 # Get FunctionApp master key
                 Write-Host "Acquiring Azure Function app master key..."
                 $masterKeyResponse = Invoke-RestMethod -Method Get -Uri $masterKeyUri -Headers $adminTokenHeader
@@ -295,7 +297,7 @@ step "Register EventGrid Topics and Subscriptions - MultiTopic" {
                 {
                     throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring master key.")
                 }
-
+                
                 # Get FunctionApp system key
                 Write-Host "Acquiring Azure Function app system key..."
                 $systemKeyUri = "$functionAppBaseUri/host/systemkeys/eventgrid_extension?code=$masterKey"
@@ -305,16 +307,16 @@ step "Register EventGrid Topics and Subscriptions - MultiTopic" {
                 {
                     throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring system key.")
                 }
-
+                
                 # Get the appsettings.json path
                 $settingsFile = $OctopusParameters["Octopus.Action.Package[CEB_TopicRegistration].ExtractedPath"] + "\appsettings.json"
                 $settingsJson = Get-Content $settingsFile | Out-String | ConvertFrom-Json
-
+                
                 $jsonTopicList = @();
                 $eventGridTopicNames.Split(',').ForEach({ 
                     $topicFullName = $eventGridTopicPrefix + $_
                 	Write-Host "Processing topic $topicFullName ..."
-
+                
                 	# Get the endpoint for the topic
                 	$topicEndpoint = az eventgrid topic show -n $topicFullName -g $resourceGroupName --query endpoint --output tsv
                 	if ([string]::IsNullOrEmpty($topicEndpoint))
@@ -322,46 +324,46 @@ step "Register EventGrid Topics and Subscriptions - MultiTopic" {
                 		throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring endpoint.")
                 	}
                 	Write-Host $topicEndpoint
-
+                
                     # Get key for the topic
                     $eventGridAccessKeyForTopic = az eventgrid topic key list -n $topicFullName -g $resourceGroupName --query key1 --output tsv
                     if ([string]::IsNullOrEmpty($eventGridAccessKeyForTopic))
                     {
                         throw New-Object -TypeName System.InvalidOperationException("ERROR - failed acquiring grid access key.")
                     }
-
+                
                     # Inject into the working json
                     $jsonTopicList += @{AXTopicName = "$_" ; eventGridTopicName = "$topicFullName" ; eventGridEndpoint = "$topicEndpoint" ; eventGridAccessKey = "$eventGridAccessKeyForTopic"} 
                 })
                 $settingsJson.CEB.topicConfig.topics = $jsonTopicList
                 $settingsJson | ConvertTo-Json -depth 10 | Set-Content $settingsFile
-
+                
                 # Perform Topic Registration from the App
                 $exeLocation = $OctopusParameters["Octopus.Action.Package[CEB_TopicRegistration].ExtractedPath"] + "\CEB.TopicRegistration.exe"
                 $exeArgList = "-connectionString `"$connectionString`" -tenantId `"$topicRegistrationTenantId`" -subscriptionId `"$topicRegistrationSubscriptionId`" -applicationId `"$topicRegistrationApplicationId`" -applicationIdPassword `"$topicRegistrationApplicationIdPassword`" "
-
+                
                 if (Test-Path $exeLocation)
                 {
                     Write-Host "Running Topic Registration App..." 
                     $exeRun = Start-Process -FilePath $exeLocation -ArgumentList $exeArgList -NoNewWindow -Wait -PassThru
-
+                
                     if ($exeRun.ExitCode -ne 0)
                 	{
                    		throw New-Object -TypeName System.InvalidOperationException("ERROR in Topic Registration App - provisioning failed.")
                 	}
-
+                
                     Write-Host "Topic Registration is complete."
                 }
                 else
                 {
                 	throw New-Object -TypeName System.InvalidOperationException("ERROR in Topic Registration App - failed to find executable.")
                 }
-
+                
                 # Exit
                 Write-Host "Process is complete."
                 New-OctopusArtifact $settingsFile
-
-
+                
+                
             EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
