@@ -1,435 +1,1347 @@
-step "DacPac.Client.WorkbenchServices_Audit" {
+step "Continue With the Deployment" {
+    condition = "Variable"
     properties = {
-        Octopus.Action.TargetRoles = "DacPacClient"
+        Octopus.Step.ConditionVariableExpression = "#{if 0T_RunStepSwitch != DB_SwitchedToDR}True #{/if}"
     }
 
     action {
-        action_type = "Octopus.TentaclePackage"
+        action_type = "Octopus.Manual"
+        environments = []
+        is_required = true
         properties = {
-            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
-                #call the function from the script module loaded with this process
-                DeployDacPac -publishFile "WorkbenchServices.Audit.OctoDeploy.publish.xml" -dacPacFile "WorkbenchServices_Audit.dacpac"
-                
-            EOT
-            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts,Octopus.Features.SubstituteInFiles"
-            Octopus.Action.Package.DownloadOnTentacle = "True"
-            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
-            Octopus.Action.Package.PackageId = "DacPac_Client_WorkbenchServices.Audit"
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.SubstituteInFiles.TargetFiles = "*.publish.xml"
+            Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+            Octopus.Action.Manual.Instructions = "Can we continue with the deployment of #{Octopus.Release.Number}?"
         }
-
-        packages {
-            acquisition_location = "ExecutionTarget"
-            feed = "#{Axioma.NugetFeed.Product}"
-            package_id = "DacPac_Client_WorkbenchServices.Audit"
-            properties = {
-                SelectionMode = "immediate"
-            }
-        }
+        tenant_tags = []
     }
 }
 
-step "DacPac.Client.WorkbenchServices" {
+step "Slack - Deployment Started" {
+    condition = "Variable"
     properties = {
-        Octopus.Action.TargetRoles = "DacPacClient"
+        Octopus.Step.ConditionVariableExpression = "#{if 0T_RunStepSwitch != DB_SwitchedToDR}True #{/if}"
     }
-
-    action {
-        action_type = "Octopus.TentaclePackage"
-        is_disabled = true
-        properties = {
-            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
-                #call the function from the script module loaded with this process
-                DeployDacPac -publishFile "WorkbenchServices.OctoDeploy.publish.xml" -dacPacFile "WorkbenchServices.dacpac"
-                
-            EOT
-            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts,Octopus.Features.SubstituteInFiles"
-            Octopus.Action.Package.DownloadOnTentacle = "True"
-            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
-            Octopus.Action.Package.PackageId = "DacPac_Client_WorkbenchServices"
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.SubstituteInFiles.TargetFiles = "*.publish.xml"
-        }
-
-        packages {
-            acquisition_location = "ExecutionTarget"
-            feed = "#{Axioma.NugetFeed.Product}"
-            package_id = "DacPac_Client_WorkbenchServices"
-            properties = {
-                SelectionMode = "immediate"
-            }
-        }
-    }
-}
-
-step "ServiceFabric.Client.axWorkbenchServiceFabric" {
-    properties = {
-        Octopus.Action.TargetRoles = "ServiceFabricClient"
-    }
-
-    action {
-        action_type = "Octopus.AzureServiceFabricApp"
-        properties = {
-            Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
-            Octopus.Action.Package.DownloadOnTentacle = "True"
-            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
-            Octopus.Action.Package.PackageId = "ServiceFabric_Client_Workbench"
-            Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
-            Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
-            Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
-            Octopus.Action.ServiceFabric.PublishProfileFile = "PublishProfiles\\OctoDeploy.xml"
-            Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec = "3600"
-            Octopus.Action.ServiceFabric.SkipPackageValidation = "False"
-            Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
-                *\ServiceManifest.xml
-                ApplicationParameters\OctoDeploy.xml
-                PublishProfiles\OctoDeploy.xml
-                ApplicationManifest.xml
-                
-            EOT
-            OctopusUseBundledTooling = "True"
-        }
-        worker_pool = "Cloud Pool"
-
-        packages {
-            acquisition_location = "ExecutionTarget"
-            feed = "#{Axioma.NugetFeed.Product}"
-            package_id = "ServiceFabric_Client_Workbench"
-            properties = {
-                SelectionMode = "immediate"
-            }
-        }
-    }
-}
-
-step "ServiceFabric.Client.WorkbenchInfrastructureApp" {
-    properties = {
-        Octopus.Action.TargetRoles = "ServiceFabricClient"
-    }
-    start_trigger = "StartWithPrevious"
-
-    action {
-        action_type = "Octopus.AzureServiceFabricApp"
-        is_disabled = true
-        properties = {
-            Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
-            Octopus.Action.Package.DownloadOnTentacle = "True"
-            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
-            Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchInfrastructureApp"
-            Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
-            Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
-            Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
-            Octopus.Action.ServiceFabric.PublishProfileFile = "PublishProfiles\\OctoDeploy.xml"
-            Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec = "3600"
-            Octopus.Action.ServiceFabric.SkipPackageValidation = "False"
-            Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
-                *\ServiceManifest.xml
-                ApplicationParameters\OctoDeploy.xml
-                PublishProfiles\OctoDeploy.xml
-                ApplicationManifest.xml
-                
-            EOT
-            OctopusUseBundledTooling = "True"
-        }
-        worker_pool = "Cloud Pool"
-
-        packages {
-            acquisition_location = "ExecutionTarget"
-            feed = "#{Axioma.NugetFeed.Product}"
-            package_id = "ServiceFabric_Client_WorkbenchInfrastructureApp"
-            properties = {
-                SelectionMode = "immediate"
-            }
-        }
-    }
-}
-
-step "ServiceFabric.Client.WorkbenchUIApp" {
-    properties = {
-        Octopus.Action.TargetRoles = "ServiceFabricClient"
-    }
-    start_trigger = "StartWithPrevious"
-
-    action {
-        action_type = "Octopus.AzureServiceFabricApp"
-        is_disabled = true
-        properties = {
-            Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
-            Octopus.Action.Package.DownloadOnTentacle = "True"
-            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
-            Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchUIApp"
-            Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
-            Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
-            Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
-            Octopus.Action.ServiceFabric.PublishProfileFile = "PublishProfiles\\OctoDeploy.xml"
-            Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec = "3600"
-            Octopus.Action.ServiceFabric.SkipPackageValidation = "False"
-            Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
-                *\ServiceManifest.xml
-                ApplicationParameters\OctoDeploy.xml
-                PublishProfiles\OctoDeploy.xml
-                ApplicationManifest.xml
-                
-            EOT
-            OctopusUseBundledTooling = "True"
-        }
-        worker_pool = "Cloud Pool"
-
-        packages {
-            acquisition_location = "ExecutionTarget"
-            feed = "#{Axioma.NugetFeed.Product}"
-            package_id = "ServiceFabric_Client_WorkbenchUIApp"
-            properties = {
-                SelectionMode = "immediate"
-            }
-        }
-    }
-}
-
-step "ServiceFabric.Client.WorkbenchServicesApp" {
-    properties = {
-        Octopus.Action.TargetRoles = "ServiceFabricClient"
-    }
-    start_trigger = "StartWithPrevious"
-
-    action {
-        action_type = "Octopus.AzureServiceFabricApp"
-        is_disabled = true
-        properties = {
-            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts,Octopus.Features.SubstituteInFiles"
-            Octopus.Action.Package.DownloadOnTentacle = "True"
-            Octopus.Action.Package.FeedId = "#{Axioma.NugetFeed.Product}"
-            Octopus.Action.Package.PackageId = "ServiceFabric_Client_WorkbenchServicesApp"
-            Octopus.Action.ServiceFabric.CopyPackageTimeoutSec = "3500"
-            Octopus.Action.ServiceFabric.OverrideUpgradeBehavior = "None"
-            Octopus.Action.ServiceFabric.OverwriteBehavior = "Always"
-            Octopus.Action.ServiceFabric.PublishProfileFile = "PublishProfiles\\OctoDeploy.xml"
-            Octopus.Action.ServiceFabric.RegisterApplicationTypeTimeoutSec = "3600"
-            Octopus.Action.ServiceFabric.SkipPackageValidation = "False"
-            Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
-                *\ServiceManifest.xml
-                ApplicationParameters\OctoDeploy.xml
-                PublishProfiles\OctoDeploy.xml
-                ApplicationManifest.xml
-                
-            EOT
-            OctopusUseBundledTooling = "True"
-        }
-        worker_pool = "Cloud Pool"
-
-        packages {
-            acquisition_location = "ExecutionTarget"
-            feed = "#{Axioma.NugetFeed.Product}"
-            package_id = "ServiceFabric_Client_WorkbenchServicesApp"
-            properties = {
-                SelectionMode = "immediate"
-            }
-        }
-    }
-}
-
-step "Service Fabric Post Deploy Check" {
-    properties = {
-        Octopus.Action.TargetRoles = "ServiceFabricClient"
-    }
-
-    action {
-        action_type = "Octopus.AzureServiceFabricPowerShell"
-        is_disabled = true
-        notes = "DEVOPS-4708 - To validate the presence/version of each ServiceFabric application on Client Clusters"
-        properties = {
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                write-host "Running post-deployment script to validate SvcFab application health."
-                Write-Host "Calling API Function with below values:"
-                Write-Host "------------------------------------------------------------"
-                Write-Host "  spaceName:" $OctopusParameters["Octopus.Space.Name"]
-                Write-Host "  projectName:" $OctopusParameters["Octopus.Project.Name"]
-                Write-Host "  environmentName:" $OctopusParameters["Octopus.Environment.Name"]
-                Write-Host "  releaseID:" $OctopusParameters["Octopus.Release.Id"]
-                Write-Host "  taskID:" $OctopusParameters["Octopus.Task.Id"]
-                Write-Host "------------------------------------------------------------"
-                
-                CheckServiceFabricAppVer `
-                    -spaceName $OctopusParameters["Octopus.Space.Name"] `
-                    -projectName $OctopusParameters["Octopus.Project.Name"] `
-                	-environmentName $OctopusParameters["Octopus.Environment.Name"] `
-                	-releaseID $OctopusParameters["Octopus.Release.Id"] `
-                	-taskID $OctopusParameters["Octopus.Task.Id"]
-            EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "PowerShell"
-            OctopusUseBundledTooling = "True"
-        }
-        worker_pool = "Cloud Pool"
-    }
-}
-
-step "AxiomaWorkbench Post Deploy - CDN Version" {
 
     action {
         action_type = "Octopus.Script"
-        is_disabled = true
+        is_required = true
         properties = {
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                #
-                # DEVOPS-4490 Set environment UI version from dist/version.xxxx.json on the package 
-                #
-                
-                #login to blueApi
-                Function LogIn {
-                    $Form = @{
-                        username   = $username
-                        password   = $password
-                        client_id  = $client_id
-                        grant_type = "password"
-                    };
-                
-                	try{
-                		$Response = Invoke-WebRequest -Uri $authUrl -Method Post -Body $Form -UseBasicParsing;
-                		Return (ConvertFrom-Json $Response).access_token;
-                	} catch {
-                		Write-Error "Could not log in";
-                		Write-Error $_;
-                		throw $_;
-                		exit 1;
-                	}
-                }
-                
-                $username       = "#{axWorkbench.adminuser}"
-                $password       = "#{axWorkbench.adminpassword}"
-                $client_id      = "#{axWorkbench.connectors.apiClient}"
-                $baseUrl        = "#{Tenant.General.ExternalUrl.PostDeploy}"
-                $versionScript  = "#{Octopus.Action.Package[gallery-ui].ExtractedPath}\version.json"
-                
-                $authUrl      = $baseUrl + '/auth/connect/token'
-                $manifestUrl  = $baseUrl + '/workbench/static/manifest.json'
-                $modulesUrl   = $baseUrl + '/wb-api/applications/api/v1/modules'
-                $uiVersionURL = $baseUrl + '/wb-api/applications/api/v1/manifests/version'
-                $apiPing 	  = $baseUrl + '/wb-api/applications/api/ping'
-                $cacheURL	  = $baseUrl + '/workbench/api/v1/config/version-cache'
-                $ping         = $baseUrl + '/workbench/api/ping'
-                
-                Write-Host "[INFO] Octo Worker Host: $env:computername "
-                Write-Host "[INFO] username: $username "
-                Write-Host "[INFO] baseUrl: $baseUrl "
-                Write-Host "[INFO] authUrl: $authUrl "
-                
-                
-                $versionBody = Get-Content $versionScript -Force
-                $token = LogIn
-                $token = 'Bearer ' + $token
-                $versionHeaders = @{
-                    'Authorization' = $token
-                    'Content-Type'  = 'application/json'
-                    'Content-Length'= $versionBody.Length
-                }
-                
-                # wait until the url is up
-                $attempt = 0
-                do {
-                    try {
-                        # Set version
-                        Write-Host "Checking if URL is up: $apiPing"
-                		Invoke-WebRequest -Uri $apiPing -UseBasicParsing -DisableKeepAlive	
-                
-                        if (-not $LASTEXITCODE) {
-                             $success = $true
-                        } else {
-                            throw "Transient error. LASTEXITCODE is $LASTEXITCODE."
-                        }
-                    }
-                    catch {
-                        if ($attempt -eq 5) {
-                            Write-Error "Task failed. With all $attempt attempts. Error: $($Error[0].Exception.Response.StatusCode)"
-                            throw
-                        }
-                
-                        Write-Host "Task failed. Attempt $attempt. Will retry in next $(5 * $attempt) seconds. Error: $($Error[0].Exception.Response.StatusCode)" -ForegroundColor Yellow
-                        Start-Sleep -Seconds $(5 * $attempt)
-                    }
-                    
-                    $attempt++
-                    
-                } until($success)
-                
-                # set manifest version
-                $attempt = 0
-                do {
-                    try {
-                        # Set version
-                        Write-Host "Setting workbench CDN version $versionScript. Running PUT on $uiVersionURL"
-                		Write-Host "JSON payload: $versionBody"
-                		Invoke-WebRequest -Uri $uiVersionURL -Body $versionBody -Method PUT -Headers $versionHeaders -UseBasicParsing
-                
-                        if (-not $LASTEXITCODE) {
-                             $success = $true
-                        } else {
-                            throw "Transient error. LASTEXITCODE is $LASTEXITCODE."
-                        }
-                    }
-                    catch {
-                        if ($attempt -eq 5) {
-                            Write-Error "Task failed. With all $attempt attempts. Error: $($Error[0].Exception.Response.StatusCode)"
-                            throw
-                        }
-                
-                        Write-Host "Task failed. Attempt $attempt. Will retry in next $(5 * $attempt) seconds. Error: $($Error[0].Exception.Response.StatusCode)" -ForegroundColor Yellow
-                        Start-Sleep -Seconds $(5 * $attempt)
-                    }
-                    
-                    $attempt++
-                    
-                } until($success)
-                
-                
-                # Clear cache
-                Write-Host "Clearing cache: Running DELETE on $cacheURL"
-                try{
-                    Invoke-WebRequest -Uri $cacheURL -Method DELETE -Headers $versionHeaders -UseBasicParsing
-                }
-                catch{
-                    Write-Error $_
-                }
-            EOT
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = "#{OD_Script-SlackDeploymentStarted}"
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
-        }
-        worker_pool = "Cloud Pool"
-
-        packages "gallery-ui" {
-            acquisition_location = "ExecutionTarget"
-            feed = "Octopus Server (built-in)"
-            package_id = "gallery-ui"
-            properties = {
-                Extract = "True"
-                Purpose = ""
-                SelectionMode = "immediate"
-            }
         }
     }
 }
 
-step "Run a Script" {
+step "Check Server Farm Status on ARR" {
+    properties = {
+        Octopus.Action.TargetRoles = "app-server,web-server"
+    }
+    start_trigger = "StartWithPrevious"
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = "#{ProcessStepScript-CheckServerFarmStatusonARR}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "Check Server Farm Status on ARR-DA" {
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+    }
+    start_trigger = "StartWithPrevious"
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = "#{ProcessStepScript-CheckServerFarmStatusonARR-DA}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "Lock the System Down" {
+    condition = "Always"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+    }
 
     action {
         action_type = "Octopus.Script"
         properties = {
-            Octopus.Action.Script.ScriptBody = "Write-Host $OctopusParameters[\"Axioma.NugetFeed.Product\"]"
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                if ($OctopusParameters["OD_Script-LockTheSystemDown"]) {
+                	Write-Host "Running OD_Script-LockTheSystemDown"
+                	Invoke-Expression $OctopusParameters["OD_Script-LockTheSystemDown"]
+                }
+            EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
         }
-        worker_pool = "Default Worker Pool"
+    }
+}
 
-        packages "ServiceFabric_Client_WorkbenchUIApp" {
+step "Deploy ESS" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package Easipay.Web-RunCondition}"
+    }
+
+    action "Deploy Package Easipay.Web" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Easipay.Web-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Easipay.Web"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Easipay.Web"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+
+    action "Update Service Endpoints & Addresses - EasiPay.Web" {
+        environments = []
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-2"
+            Octopus.Action.Template.Version = "15"
+            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package Easipay.Web].Output.Package.InstallationDirectoryPath}/**/*.config;"
+            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
+            RFROptions = "None"
+            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
+        }
+    }
+}
+
+step "Deploy MyPay.API.Web-DA" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package MyPay.API.Web-DA-RunCondition}"
+    }
+
+    action "Deploy Package MyPay.API.Web-DA" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package MyPay.API.Web-DA-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "MyPay.API.Web"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "MyPay.API.Web"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+
+    action "Update Service Endpoints & Addresses - MyPay.API.Web-DA" {
+        environments = ["Production_ARR", "DES-STAGE_ARR", "PROD_AUS_ARR"]
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-2"
+            Octopus.Action.Template.Version = "15"
+            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package MyPay.API.Web-DA].Output.Package.InstallationDirectoryPath}/**/*.config;"
+            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
+            RFROptions = "None"
+            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
+        }
+    }
+
+    action "IIS - Update Property - Physical path - MyPay.API.Web-DA" {
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-7"
+            Octopus.Action.Template.Version = "3"
+            propertyName = "physicalPath"
+            propertyValue = "#{Octopus.Action[Deploy Package MyPay.API.Web-DA].Output.Package.InstallationDirectoryPath}"
+            webSiteName = "#{OD_DA_WebsiteName-MyPayApi}\\"
+        }
+    }
+}
+
+step "Deploy MyPay.API.Web-ESS" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package MyPay.API.Web-ESS-RunCondition}"
+    }
+
+    action "Deploy Package MyPay.API.Web-ESS" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package MyPay.API.Web-ESS-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "MyPay.API.Web"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "MyPay.API.Web"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+
+    action "Update Service Endpoints & Addresses - MyPay.API.Web-ESS" {
+        environments = []
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-2"
+            Octopus.Action.Template.Version = "15"
+            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package MyPay.API.Web-ESS].Output.Package.InstallationDirectoryPath}/**/*.config;"
+            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
+            RFROptions = "None"
+            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
+        }
+    }
+
+    action "IIS - Update Property - Physical path - MyPay.API.Web-ESS" {
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-7"
+            Octopus.Action.Template.Version = "3"
+            propertyName = "physicalPath"
+            propertyValue = "#{Octopus.Action[Deploy Package MyPay.API.Web-ESS].Output.Package.InstallationDirectoryPath}"
+            webSiteName = "#{OD_ESS_WebsiteName-MyPayApi}"
+        }
+    }
+
+    action "Update Release Record MyPay.API.Web-ESS" {
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Template.Id = "ActionTemplates-341"
+            Octopus.Action.Template.Version = "15"
+            ur_ComponentName = "MyPay.API.Web-ESS"
+        }
+    }
+}
+
+step "Deploy API.Web" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package API.Web-RunCondition}"
+    }
+
+    action "Deploy Package API.Web" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package API.Web-CustomInstallationPath}"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "API.Web"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "API.Web"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy SSO.CS" {
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+    }
+
+    action "Deploy Package Easipay.SSO.CS" {
+        action_type = "Octopus.TentaclePackage"
+        is_disabled = true
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Easipay.SSO.CS-CustomInstallationPath}"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "Octopus Server (built-in)"
+            Octopus.Action.Package.PackageId = "Easipay.SSO.CS"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
             acquisition_location = "Server"
             feed = "Octopus Server (built-in)"
-            package_id = "ServiceFabric_Client_WorkbenchUIApp"
+            package_id = "Easipay.SSO.CS"
+        }
+    }
+}
+
+step "Deploy SSOv2" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package Easipay.SSO.v2-RunCondition}"
+    }
+
+    action "Deploy Package Easipay.SSO.v2" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Easipay.SSO.v2-CustomInstallationPath}"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "Octopus Server (built-in)"
+            Octopus.Action.Package.PackageId = "Easipay.SSO.v2"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "Octopus Server (built-in)"
+            package_id = "Easipay.SSO.v2"
             properties = {
-                Extract = "False"
-                Purpose = ""
                 SelectionMode = "immediate"
             }
+        }
+    }
+}
+
+step "Deploy BizPay.Presentation" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package BizPay.Presentation-RunCondition}"
+    }
+
+    action "Deploy Package BizPay.Presentation" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package BizPay.Presentation-CustomInstallationPath}"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "BizPay.Presentation"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+        tenant_tags = []
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "BizPay.Presentation"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+
+    action "Update Service Endpoints & Addresses - BizPay.Presentation" {
+        environments = []
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-2"
+            Octopus.Action.Template.Version = "15"
+            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package BizPay.Presentation].Output.Package.InstallationDirectoryPath}/**/*.config;"
+            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
+            RFROptions = "None"
+            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
+        }
+        tenant_tags = ["Tenant Location/SmartPayroll"]
+    }
+}
+
+step "Deploy BizPay.Services" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package BizPay.Services-RunCondition}"
+    }
+
+    action "Deploy Package BizPay.Services" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package BizPay.Services-CustomInstallationPath}"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "BizPay.Services"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+        tenant_tags = []
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "BizPay.Services"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+
+    action "Update Service Endpoints & Addresses - BizPay.Services" {
+        environments = []
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-2"
+            Octopus.Action.Template.Version = "15"
+            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package BizPay.Services].Output.Package.InstallationDirectoryPath}/**/*.config;"
+            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
+            RFROptions = "None"
+            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
+        }
+        tenant_tags = []
+    }
+
+    action "IIS - Update Property - Physical path - BizPay.Services" {
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-7"
+            Octopus.Action.Template.Version = "3"
+            propertyName = "physicalPath"
+            propertyValue = "#{Octopus.Action[Deploy Package BizPay.Services].Output.Package.InstallationDirectoryPath}"
+            webSiteName = "#{IIS_FullPath-BizPay.Services}"
+        }
+        tenant_tags = []
+    }
+
+    action "Update Release Record BizPay.Services" {
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Template.Id = "ActionTemplates-341"
+            Octopus.Action.Template.Version = "15"
+            ur_ComponentName = "BizPay.Services"
+        }
+        tenant_tags = []
+    }
+}
+
+step "Update Service Endpoints & Addresses - WebServer - Http" {
+    condition = "Always"
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+    }
+}
+
+step "Deploy Package Christmas.Database" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package Christmas.Database-RunCondition}"
+    }
+
+    action {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = "Invoke-Expression $OctopusParameters[\"OD_PostDeploymentScript-DeployPackageChristmas.Database\"]"
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Christmas.Database"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Christmas.Database"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy Package Christmas.Database - DR" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{OD_SwitchedToDR}"
+    }
+    start_trigger = "StartWithPrevious"
+
+    action {
+        action_type = "Octopus.TentaclePackage"
+        environments = []
+        is_disabled = true
+        properties = {
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = "Invoke-Expression $OctopusParameters[\"OD_PostDeploymentScript-DeployPackageChristmas.Database\"]"
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "Datacom Nexus"
+            Octopus.Action.Package.PackageId = "Christmas.Database"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "Datacom Nexus"
+            package_id = "Christmas.Database"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy ServiceHost" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package Christmas.ServiceHost-RunCondition}"
+    }
+
+    action "Deploy Package Christmas.ServiceHost" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+                
+                if ($OctopusParameters["OD_DeploymentScript-TransformMyPay.config"]) {
+                	Write-Host "Running OD_DeploymentScript-TransformMyPay.config"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-TransformMyPay.config"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles,Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Christmas.ServiceHost-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Christmas.ServiceHost"
+            Octopus.Action.PowerShell.Edition = "Core"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Christmas.ServiceHost"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy Christmas.Client" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package Christmas.Client-RunCondition}"
+    }
+
+    action "Deploy Package Christmas.Client" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                # Octopus currently doesn't support the transform file and target file both being in 
+                # sub directories. Therefore the nuspec has been changed to move the app.config into the
+                # transform files folder and then this script will move it back into the application files folder.
+                # we can't put the transform files in the application files folder because then they
+                # would get picked up by the application manifest.
+                
+                $dest = $OctopusParameters['Octopus.Action[Deploy Package Christmas.Client].Output.Package.InstallationDirectoryPath']
+                $applicationFilesPath = Join-Path $dest ("Application Files\Christmas.Client.Launcher_" + $OctopusParameters['Octopus.Action[Deploy Package Christmas.Client].Package.NuGetPackageVersion'])
+                $configPath = Join-Path $dest "TransformFiles/Christmas.Client.exe.config"
+                
+                Write-Host '$configPath: '$configPath
+                Write-Host '$applicationFilesPath: '$applicationFilesPath
+                
+                Move-Item $configPath $applicationFilesPath | Write-Host
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "App.Transform.config => Christmas.Client.exe.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Christmas.Client-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "True"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Christmas.Client"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "TransformFiles/App.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Christmas.Client"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy Christmas.TestClient" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package Christmas.TestClient-RunCondition}"
+    }
+
+    action "Deploy Package Christmas.TestClient" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "App.Transform.config => Christmas.TestClient.exe.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Christmas.TestClient-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Christmas.TestClient"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Christmas.TestClient"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy Package API.Harness" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package API.Harness-RunCondition}"
+    }
+
+    action {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package API.Harness-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "API.Harness"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "API.Harness"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy Package Christmas.ElementHarness" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package Christmas.ElementHarness-RunCondition}"
+    }
+
+    action "Deploy Package Christmas.ElementHarness" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Christmas.ElementHarness-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Christmas.ElementHarness"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Christmas.ElementHarness"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy Christmas.Bridge.API" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{OD_DeployChristmas.Bridge.API}"
+    }
+
+    action "Deploy Package Christmas.Bridge.API" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.Deploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+                
+                if ($OctopusParameters["OD_DeploymentScript-TransformWeb.config"]) {
+                	Write-Host "Running OD_DeploymentScript-TransformWeb.config"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-TransformWeb.config"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+                
+                if ($OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]) {
+                	Write-Host "Running OD_PostDeploymentScript-CreateHealthCheckFile"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-CreateHealthCheckFile"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles,Octopus.Features.SelectPowerShellEditionForWindows"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = "*.Transform.config => *.config"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Christmas.Bridge.API-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Christmas.Bridge.API"
+            Octopus.Action.PowerShell.Edition = "Core"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.config"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Christmas.Bridge.API"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Deploy Christmas.PollingService" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{OD_DeployPollingService}"
+    }
+
+    action "Deploy Package Christmas.PollingService" {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_PostDeploymentScript-DeployPackageChristmas.PollingService"]) {
+                	Write-Host "OD_PostDeploymentScript-DeployPackageChristmas.PollingService"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-DeployPackageChristmas.PollingService"]
+                }
+                
+                <#
+                # If installation failed, post a message on Slack to get someone to check out the reason and decide what do
+                if ($LastExitCode -ne 0) {
+                    Write-Host "LastExitCode is: " + $LastExitCode + ",Result of last operation: " + $?
+                    
+                    Write-Host "$($_.Exception.Message)"  -ForegroundColor Red
+                    Write-Host "$($_.InvocationInfo.PositionMessage)" -ForegroundColor Red
+                    Write-Host "http://xmas-buildsrv2.dsldev.local:81$OctopusWebDeploymentLink"
+                    
+                    $payload = @{
+                        channel = "#deployments"
+                        username = "Octopus Deploy"
+                        icon_emoji = ":loudspeaker:"
+                        attachments = @(
+                            @{
+                            pretext = "Manual intervention required";
+                            title = "$OctopusProjectName release $OctopusReleaseNumber to $OctopusEnvironmentName";
+                            title_link = "http://xmas-buildsrv2.dsldev.local:81$OctopusWebDeploymentLink";
+                            };
+                        );
+                    }
+                    
+                    Invoke-RestMethod -Method POST -Body ($payload | ConvertTo-Json -Depth 4) -Uri "https://hooks.slack.com/services/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"  -ContentType 'application/json'
+                    
+                    exit -1
+                } else {
+                    # Give the account that the remoting services run under permission to view the status of the polling services (required to display status on client)
+                    # Probably only need one or the other
+                    
+                    # Use sc.exe instead of Set-Content cmdlet
+                    sc.exe sdset SCMANAGER "D:(A;;CCLCRPRC;;;AU)(A;;CCLCRPWPRC;;;SY)(A;;KA;;;BA)S:(AU;FA;KA;;;WD)(AU;OIIOFA;GA;;;WD)"
+                    
+                    $serviceNames = $OctopusParameters["PollingServiceNames"].Split(",")
+                    
+                    foreach($serviceName in $serviceNames){ 
+                        Write-Host "serviceName: "$serviceName
+                        
+                        # Executing subinacl.exe under Build\lib folder
+                        & "C:\Octopus\subinacl.exe" /SERVICE \\$ServiceHost_MachineName\$serviceName /GRANT=$ServiceHost_Account=S                            
+                    }
+                }
+                #>
+                
+                
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                
+                	# Restart services with Automatic StartType
+                	Get-Service -DisplayName '(#{OD_TenantName}) - XMAS*' | Where-Object {$_.StartType -eq "Automatic"} | Restart-Service
+                }
+            EOT
+            Octopus.Action.CustomScripts.PreDeploy.ps1 = <<-EOT
+                Write-Host "Stopping all (#{OD_TenantName}) - XMAS* polling services"
+                Get-Service | Where-Object {$_.displayname -like '(#{OD_TenantName}) - XMAS*'} | Stop-Service
+                
+                # We want to make a backup of the exisiting DLLs
+                if ($OctopusParameters["OD_DeploymentScript-ArchiveFiles"]) {
+                	Write-Host "Running OD_DeploymentScript-ArchiveFiles"
+                	Invoke-Expression $OctopusParameters["OD_DeploymentScript-ArchiveFiles"]
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = <<-EOT
+                *.Transform.xml => *.xml
+                App.Transform.config => Christmas.PollingService.exe.config
+            EOT
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Christmas.PollingService-CustomInstallationPath}"
+            Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Christmas.PollingService"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.*"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Christmas.PollingService"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Update Service Endpoints - AppServer" {
+    condition = "Always"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+    }
+}
+
+step "Set Polling Service Startup Type & Status" {
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{OD_DeployPollingService}"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = "Invoke-Expression $OctopusParameters[\"OD_Script-SetPollingServiceStartupTypeAndStatus\"]"
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "Re-sign and Move Client Application" {
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+    }
+
+    action "Re-sign Application Manifest" {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = "Invoke-Expression $OctopusParameters[\"OD_Script-Re-signApplicationManifest\"]"
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+
+    action "Move Client and TestClient Files" {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = "Invoke-Expression $OctopusParameters[\"OD_Script-MoveClientAndTestClientFiles\"]"
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "Deploy Package Christmas.ReportDefinition" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{Deploy Package Christmas.ReportDefinition-RunCondition}"
+    }
+
+    action {
+        action_type = "Octopus.TentaclePackage"
+        properties = {
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                $msbuild = ${OD_P_MsBuild}
+                
+                $collectionOfArgs = @("Datapay-DeployReports.proj", 
+                "/target:DeployReports", 
+                "/property:PathToReportFiles=.\Christmas.ReportDefinition", 
+                "/property:AustraliaPathToReportFiles=.\Christmas.Australia.ReportDefinition", 
+                "/property:ReportingServiceUrl=${OD_ReportingDeployService}",
+                "/property:ReportParentFolder=${OD_P_ReportParentFolder}",
+                "/property:ReportBIFolder=${OD_P_ReportBIFolder}",
+                "/property:AustraliaReportParentFolder=${OD_P_AustraliaReportParentFolder}",
+                "/property:DisplayWarnings=false",
+                "/property:IncludeImages=true",
+                "/property:IncludeDataSources=true")
+                
+                Write-Host $msbuild $collectionOfArgs
+                
+                & $msbuild $collectionOfArgs
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomScripts"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "#{OD_PackageFeed}"
+            Octopus.Action.Package.PackageId = "Christmas.ReportDefinition"
+        }
+
+        packages {
+            acquisition_location = "Server"
+            feed = "#{OD_PackageFeed}"
+            package_id = "Christmas.ReportDefinition"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Add Release History Record in DB" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{if 0T_RunStepSwitch != DB_SwitchedToDR}True #{/if}"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                if ($OctopusParameters["OD_Script-AddReleaseHistoryRecordinDB"]) {
+                	Write-Host "Running OD_Script-AddReleaseHistoryRecordinDB"
+                    Invoke-Expression $OctopusParameters["OD_Script-AddReleaseHistoryRecordinDB"]
+                }
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+        tenant_tags = ["Deployment Phase/LIVE"]
+    }
+}
+
+step "Unlock Deployed System" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Action[Lock the System Down].IsSkipped}true#{/unless}#{unless Octopus.Action[Deploy Package Christmas.ServiceHost].IsSkipped}true#{/unless}"
+    }
+
+    action "Confirm Ready to Unlock the System" {
+        action_type = "Octopus.Manual"
+        environments = ["PROD_NZ", "PROD_AUS"]
+        properties = {
+            Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+            Octopus.Action.Manual.Instructions = <<-EOT
+                Is everything done?
+                Let's unlock the system.
+            EOT
+        }
+    }
+
+    action "Unlock the System" {
+        action_type = "Octopus.Script"
+        environments = []
+        is_required = true
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                # Find the ServiceHost web.config
+                $ServiceHostPath = Get-IISSitePhysicalPath "#{W-SH_WebsiteName}"
+                
+                $WebConfigPath = $ServiceHostPath + "\Web.config"
+                $RegexFindString = '<add key="LimitedUsers" value=".*" \/>'
+                $ReplaceString = '<add key="LimitedUsers" value="" />'
+                
+                Update-RegexStringInFile $WebConfigPath $RegexFindString $ReplaceString
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "Octopus - Trigger Smoke Test on Endpoints" {
+
+}
+
+step "Octopus - Submit Switchover Request" {
+    condition = "Variable"
+    properties = {
+        Octopus.Step.ConditionVariableExpression = "#{ARR_SubmitSwitchoverRequest}"
+    }
+}
+
+step "Octopus - Trigger Switchover Runbook" {
+}
+
+step "Slack - Deployment Finished" {
+    condition = "Variable"
+    properties = {
+        Octopus.Step.ConditionVariableExpression = "#{if 0T_RunStepSwitch != DB_SwitchedToDR}True #{/if}"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        is_required = true
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = "#{OD_Script-SlackDeploymentFinished}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "TeamCity - Deployment Done Build Configuration" {
+    condition = "Variable"
+    properties = {
+        Octopus.Step.ConditionVariableExpression = "#{unless SRV_TeamCity_Url == \"No\"}#{T-TC_DeploymentDone_BuildConfigurationID}#{/unless}"
+    }
+}
+
+step "Revert the DB to the Snapshot" {
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        is_disabled = true
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $DatabaseSnapshotName = #{Octopus.Action[Create a DB Snapshot].Output.DatabaseSnapshotName}
+                $LogFile = #{Octopus.Action[Create a DB Snapshot].Output.LogFile}
+                
+                Restore-DatabaseFromSnapshot -ServerName $OD_ServerName_DB -DatabaseName $OD_DB_DatabaseName -DatabaseSnapshotName $DatabaseSnapshotName -LogFile $LogFile
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "Drop the DB Snapshot" {
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        is_disabled = true
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $DatabaseSnapshotName = #{Octopus.Action[Create a DB Snapshot].Output.DatabaseSnapshotName}
+                $LogFile = #{Octopus.Action[Create a DB Snapshot].Output.LogFile}
+                
+                Remove-Database -ServerName $OD_ServerName_DB -DatabaseName $DatabaseSnapshotName -LogFile $LogFile
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "Create a DB Snapshot" {
+    condition = "Variable"
+    properties = {
+        Octopus.Action.TargetRoles = "app-server"
+        Octopus.Step.ConditionVariableExpression = "#{unless OD_SwitchedToDR}true#{/unless}"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        is_disabled = true
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                
+                $DatabaseSnapshotPath = "#{Octopus.Action[Deploy Package Christmas.Database].Output.Package.InstallationDirectoryPath}"
+                $DatabaseSnapshotName = $OD_DB_DatabaseName + '_Snapshot_' + (Get-Date -Format %yyyyMMddHHmmss)
+                $LogFile = $DatabaseSnapshotPath + $DatabaseSnapshotName + ".log"
+                
+                New-DatabaseSnapshot -ServerName $OD_ServerName_DB DatabaseName $OD_DB_DatabaseName -DatabaseLogicalName $OD_DB_DatabaseName_LogicalName --DatabaseSnapshotPath $DatabaseSnapshotPath -DatabaseSnapshotName $DatabaseSnapshotName -LogFile $LogFile
+                
+                Set-OctopusVariable -name "DatabaseSnapshotName" -value $DatabaseSnapshotName
+                Set-OctopusVariable -name "LogFile" -value $LogFile
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+    }
+}
+
+step "Deploy SSO" {
+    properties = {
+        Octopus.Action.TargetRoles = "web-server"
+    }
+
+    action "Deploy Package Easipay.SSO" {
+        action_type = "Octopus.TentaclePackage"
+        is_disabled = true
+        properties = {
+            Octopus.Action.CustomScripts.PostDeploy.ps1 = <<-EOT
+                if ($OctopusParameters["OD_RunPostDeploymentScript-FileReplacement"]) {
+                	Write-Host "Running OD_PostDeploymentScript-FileReplacement"
+                	Invoke-Expression $OctopusParameters["OD_PostDeploymentScript-FileReplacement"]
+                }
+            EOT
+            Octopus.Action.CustomScripts.PreDeploy.ps1 = <<-EOT
+                if (-not [string]::IsNullOrEmpty($OD_SSO_IdentityProvidersLocation)) {
+                  # Copy across the identity providers if variable has been set
+                  Copy-Item $OD_SSO_IdentityProvidersLocation/*.xml . -force
+                }
+            EOT
+            Octopus.Action.EnabledFeatures = "Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+            Octopus.Action.Package.AdditionalXmlConfigurationTransforms = <<-EOT
+                *.Transform.config => *.config
+                *.Transform.xml => *.xml
+            EOT
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
+            Octopus.Action.Package.CustomInstallationDirectory = "#{Deploy Package Easipay.SSO-CustomInstallationPath}"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "Octopus Server (built-in)"
+            Octopus.Action.Package.PackageId = "Easipay.SSO"
+            Octopus.Action.SubstituteInFiles.TargetFiles = "*.Transform.*"
+        }
+        tenant_tags = ["Tenant Name/Live_External", "Tenant Name/UAT_External"]
+
+        packages {
+            acquisition_location = "Server"
+            feed = "Octopus Server (built-in)"
+            package_id = "Easipay.SSO"
         }
     }
 }
