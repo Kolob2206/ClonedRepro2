@@ -140,19 +140,6 @@ step "Deploy ESS" {
             }
         }
     }
-
-    action "Update Service Endpoints & Addresses - EasiPay.Web" {
-        environments = []
-        properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Template.Id = "ActionTemplates-2"
-            Octopus.Action.Template.Version = "15"
-            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package Easipay.Web].Output.Package.InstallationDirectoryPath}/**/*.config;"
-            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
-            RFROptions = "None"
-            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
-        }
-    }
 }
 
 step "Deploy MyPay.API.Web-DA" {
