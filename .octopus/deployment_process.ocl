@@ -428,20 +428,6 @@ step "Deploy BizPay.Presentation" {
             }
         }
     }
-
-    action "Update Service Endpoints & Addresses - BizPay.Presentation" {
-        environments = []
-        properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Template.Id = "ActionTemplates-2"
-            Octopus.Action.Template.Version = "15"
-            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package BizPay.Presentation].Output.Package.InstallationDirectoryPath}/**/*.config;"
-            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
-            RFROptions = "None"
-            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
-        }
-        tenant_tags = ["Tenant Location/SmartPayroll"]
-    }
 }
 
 step "Deploy BizPay.Services" {
@@ -491,42 +477,6 @@ step "Deploy BizPay.Services" {
                 SelectionMode = "immediate"
             }
         }
-    }
-
-    action "Update Service Endpoints & Addresses - BizPay.Services" {
-        environments = []
-        properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Template.Id = "ActionTemplates-2"
-            Octopus.Action.Template.Version = "15"
-            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package BizPay.Services].Output.Package.InstallationDirectoryPath}/**/*.config;"
-            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
-            RFROptions = "None"
-            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
-        }
-        tenant_tags = []
-    }
-
-    action "IIS - Update Property - Physical path - BizPay.Services" {
-        properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Template.Id = "ActionTemplates-7"
-            Octopus.Action.Template.Version = "3"
-            propertyName = "physicalPath"
-            propertyValue = "#{Octopus.Action[Deploy Package BizPay.Services].Output.Package.InstallationDirectoryPath}"
-            webSiteName = "#{IIS_FullPath-BizPay.Services}"
-        }
-        tenant_tags = []
-    }
-
-    action "Update Release Record BizPay.Services" {
-        properties = {
-            Octopus.Action.RunOnServer = "true"
-            Octopus.Action.Template.Id = "ActionTemplates-341"
-            Octopus.Action.Template.Version = "15"
-            ur_ComponentName = "BizPay.Services"
-        }
-        tenant_tags = []
     }
 }
 
