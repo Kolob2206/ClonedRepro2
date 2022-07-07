@@ -190,30 +190,6 @@ step "Deploy MyPay.API.Web-DA" {
             }
         }
     }
-
-    action "Update Service Endpoints & Addresses - MyPay.API.Web-DA" {
-        environments = ["Production_ARR", "DES-STAGE_ARR", "PROD_AUS_ARR"]
-        properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Template.Id = "ActionTemplates-2"
-            Octopus.Action.Template.Version = "15"
-            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package MyPay.API.Web-DA].Output.Package.InstallationDirectoryPath}/**/*.config;"
-            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
-            RFROptions = "None"
-            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
-        }
-    }
-
-    action "IIS - Update Property - Physical path - MyPay.API.Web-DA" {
-        properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Template.Id = "ActionTemplates-7"
-            Octopus.Action.Template.Version = "3"
-            propertyName = "physicalPath"
-            propertyValue = "#{Octopus.Action[Deploy Package MyPay.API.Web-DA].Output.Package.InstallationDirectoryPath}"
-            webSiteName = "#{OD_DA_WebsiteName-MyPayApi}\\"
-        }
-    }
 }
 
 step "Deploy MyPay.API.Web-ESS" {
@@ -262,39 +238,6 @@ step "Deploy MyPay.API.Web-ESS" {
             properties = {
                 SelectionMode = "immediate"
             }
-        }
-    }
-
-    action "Update Service Endpoints & Addresses - MyPay.API.Web-ESS" {
-        environments = []
-        properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Template.Id = "ActionTemplates-2"
-            Octopus.Action.Template.Version = "15"
-            RFRCandidatePathGlobs = "#{Octopus.Action[Deploy Package MyPay.API.Web-ESS].Output.Package.InstallationDirectoryPath}/**/*.config;"
-            RFRFindRegex = "<(endpoint address|add serviceAddress)=\"(https?):\\/\\/.+\\/(Services\\/.*Datapay(Secure|Unsecure).*)"
-            RFROptions = "None"
-            RFRSubstitution = "<$1=\"$2://#{OD_ServiceHostAddress_Http}/$3"
-        }
-    }
-
-    action "IIS - Update Property - Physical path - MyPay.API.Web-ESS" {
-        properties = {
-            Octopus.Action.RunOnServer = "false"
-            Octopus.Action.Template.Id = "ActionTemplates-7"
-            Octopus.Action.Template.Version = "3"
-            propertyName = "physicalPath"
-            propertyValue = "#{Octopus.Action[Deploy Package MyPay.API.Web-ESS].Output.Package.InstallationDirectoryPath}"
-            webSiteName = "#{OD_ESS_WebsiteName-MyPayApi}"
-        }
-    }
-
-    action "Update Release Record MyPay.API.Web-ESS" {
-        properties = {
-            Octopus.Action.RunOnServer = "true"
-            Octopus.Action.Template.Id = "ActionTemplates-341"
-            Octopus.Action.Template.Version = "15"
-            ur_ComponentName = "MyPay.API.Web-ESS"
         }
     }
 }
